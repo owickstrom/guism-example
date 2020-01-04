@@ -1,0 +1,28 @@
+cabal-version:       >=1.10
+name:                guism-example
+version:             0.1.0
+license-file:        LICENSE
+author:              Oskar Wickström
+build-type:          Simple
+
+executable guism-example
+  main-is:             Main.hs
+  build-depends:       base >=4.12 && <4.13
+                     , async
+                     , gi-gdk
+                     , gi-glib
+                     , gi-gtk
+                     , gi-gtk-declarative >= 0.6.3 && < 0.7
+                     , indexed
+                     , motor
+                     , mtl
+                     , row-types
+                     , text
+                     , vector
+  other-modules:       GUISM.Base.WindowUserInterface
+                     , GUISM.Gtk
+                     , GUISM.Gtk.EventListener
+                     , GUISM.Gtk.Markup
+                     , GUISM.Syntax
+  default-language:    Haskell2010
+  ghc-options:         -threaded
