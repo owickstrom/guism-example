@@ -5,7 +5,30 @@ license-file:        LICENSE
 author:              Oskar Wickström
 build-type:          Simple
 
+library
+  hs-source-dirs:      lib
+  build-depends:       base >=4.12 && <4.13
+                     , async
+                     , gi-gdk
+                     , gi-glib
+                     , gi-gtk
+                     , gi-gtk-declarative >= 0.6.3 && < 0.7
+                     , indexed
+                     , motor
+                     , mtl
+                     , row-types
+                     , text
+                     , vector
+  exposed-modules:     Control.Monad.Indexed.IO
+                     , GUISM.Base.WindowUserInterface
+                     , GUISM.Gtk
+                     , GUISM.Gtk.EventListener
+                     , GUISM.Gtk.Markup
+                     , GUISM.Syntax
+  default-language:    Haskell2010
+
 executable guism-example
+  hs-source-dirs:      app
   main-is:             Main.hs
   build-depends:       base >=4.12 && <4.13
                      , async
@@ -19,11 +42,6 @@ executable guism-example
                      , row-types
                      , text
                      , vector
-  other-modules:       Control.Monad.Indexed.IO
-                     , GUISM.Base.WindowUserInterface
-                     , GUISM.Gtk
-                     , GUISM.Gtk.EventListener
-                     , GUISM.Gtk.Markup
-                     , GUISM.Syntax
+                     , guism-example
   default-language:    Haskell2010
   ghc-options:         -threaded

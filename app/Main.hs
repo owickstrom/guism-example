@@ -32,13 +32,15 @@ import           GUISM.Gtk.Markup
 import           GUISM.Syntax
 
 -- * Application events and states
+--
+-- This is a skeleton for some kind of editor application.
 
-data HomeEvent = Save | About | Exit deriving (Eq, Typeable)
+data EditorEvent = Save | About | Exit deriving (Eq, Typeable)
 
 data AboutEvent = Close deriving (Eq, Typeable)
 
 class AppViews markup where
-  homeView :: markup 'TopWindow HomeEvent
+  homeView :: markup 'TopWindow EditorEvent
   aboutView :: markup 'Modal AboutEvent
 
 type Application t m
@@ -48,23 +50,23 @@ type Application t m
     , AppViews (WindowMarkup (t m))
     )
 
-start :: Application t m => t m Empty Empty ()
-start = do
-  info "Starting application"
-  withNewWindow #home homeView inHome
+newEditorWindow :: Application t m => t m Empty Empty ()
+newEditorWindow = do
+  info "Opening new editor window"
+  withNewWindow #editor homeView inEditor
   where
-    inHome = do
-      patchWindow #home homeView
-      e <- nextEvent #home
+    inEditor = do
+      patchWindow #editor homeView
+      e <- nextEvent #editor
       case e of
-          Save -> do
-            beep #home
-            info "FIXME: Support saving files"
-            inHome
-          About -> do
-            showAbout #home
-            inHome
-          Exit -> info "Bye."
+        Save -> do
+          beep #editor
+          info "FIXME: Support saving files"
+          inEditor
+        About -> do
+          showAbout #editor
+          inEditor
+        Exit -> info "Bye."
 
 showAbout
   :: (Application t m, r ~ (parent .== (Window (t m) 'TopWindow event)))
@@ -120,4 +122,4 @@ info = iliftIO . putStrLn
 -- * Main
 
 main :: IO ()
-main = runGtkUserInterface id start
+main = runGtkUserInterface id newEditorWindow
