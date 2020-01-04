@@ -19,7 +19,8 @@ executable guism-example
                      , row-types
                      , text
                      , vector
-  other-modules:       GUISM.Base.WindowUserInterface
+  other-modules:       Control.Monad.Indexed.IO
+                     , GUISM.Base.WindowUserInterface
                      , GUISM.Gtk
                      , GUISM.Gtk.EventListener
                      , GUISM.Gtk.Markup

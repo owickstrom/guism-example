@@ -14,6 +14,7 @@ module Main where
 import           Prelude                        hiding (return, (>>), (>>=))
 
 import           Control.Monad.Indexed
+import           Control.Monad.Indexed.IO
 import           Data.Row.Records
 import           Data.Typeable                  (Typeable)
 import           Data.Vector                    (Vector)
@@ -32,7 +33,7 @@ import           GUISM.Syntax
 
 -- * Application events and states
 
-data HomeEvent = About | Exit deriving (Eq, Typeable)
+data HomeEvent = Save | About | Exit deriving (Eq, Typeable)
 
 data AboutEvent = Close deriving (Eq, Typeable)
 
@@ -42,27 +43,36 @@ class AppViews markup where
 
 type Application t m
   = ( MonadFSM (t m)
+    , IxMonadIO (t m)
     , WindowUserInterface (t m)
     , AppViews (WindowMarkup (t m))
     )
 
 start :: Application t m => t m Empty Empty ()
-start = withNewWindow #home homeView inHome
+start = do
+  info "Starting application"
+  withNewWindow #home homeView inHome
   where
     inHome = do
       patchWindow #home homeView
       e <- nextEvent #home
       case e of
+          Save -> do
+            beep #home
+            info "FIXME: Support saving files"
+            inHome
           About -> do
             showAbout #home
             inHome
-          Exit -> ireturn ()
+          Exit -> info "Bye."
 
 showAbout
   :: (Application t m, r ~ (parent .== (Window (t m) 'TopWindow event)))
   => Name parent
   -> t m r r ()
-showAbout parent = withNewModalWindow parent #about aboutView $ do
+showAbout parent = do
+  iliftIO (putStrLn "Showing 'About' screen")
+  withNewModalWindow parent #about aboutView $ do
     Close <- nextEvent #about
     ireturn ()
 
@@ -82,11 +92,13 @@ padded ws = container
   ]
 
 instance AppViews GtkWindowMarkup where
-  homeView = GtkTopWindowMarkup $ bin Gtk.Window [] $ container Gtk.Box [#orientation := Gtk.OrientationVertical]
+  homeView = GtkTopWindowMarkup $ bin Gtk.Window [ on #deleteEvent (const (True, Exit))] $
+    container Gtk.Box [#orientation := Gtk.OrientationVertical]
     [ container Gtk.MenuBar []
       [ subMenu
         "File"
-        [ menuItem Gtk.MenuItem [on #activate Exit] (widget Gtk.Label [#label := "Exit"])
+        [ menuItem Gtk.MenuItem [on #activate Save] (widget Gtk.Label [#label := "Save"])
+        , menuItem Gtk.MenuItem [on #activate Exit] (widget Gtk.Label [#label := "Exit"])
         ]
       , subMenu
         "Help"
@@ -99,6 +111,11 @@ instance AppViews GtkWindowMarkup where
               [ widget Gtk.Label [#label := "This is a GUISM application."]
               , widget Gtk.Button [#label := "Close", on #clicked Close]
               ]
+
+-- * Extremely basic logging
+
+info :: IxMonadIO m => String -> m i i ()
+info = iliftIO . putStrLn
 
 -- * Main
 

@@ -27,26 +27,27 @@ import           Prelude
 
 import           Control.Concurrent
 import           Control.Concurrent.Async
-import           Control.Monad                  ( void )
-import           Control.Monad.IO.Class
 import           Control.Exception
-import           Control.Monad.Indexed          ( )
+import           Control.Monad                  (void)
+import           Control.Monad.Indexed          ()
+import           Control.Monad.Indexed.IO
 import           Control.Monad.Indexed.Trans
-import           Data.Row.Records               ( Empty )
-import           Data.Typeable                  ( Typeable )
+import           Control.Monad.IO.Class
+import           Data.Row.Records               (Empty)
 import           Data.String
-import qualified GI.Gdk                        as Gdk
-import qualified GI.GLib.Constants             as GLib
-import qualified GI.Gtk                        as Gtk
-import qualified GI.Gtk.Declarative            as Declarative
-import qualified GI.Gtk.Declarative.State      as Declarative
+import           Data.Typeable                  (Typeable)
 import           GHC.OverloadedLabels
-import           Motor.FSM               hiding ( (:=) )
-import qualified Motor.FSM                     as FSM
+import qualified GI.Gdk                         as Gdk
+import qualified GI.GLib.Constants              as GLib
+import qualified GI.Gtk                         as Gtk
+import qualified GI.Gtk.Declarative             as Declarative
+import qualified GI.Gtk.Declarative.State       as Declarative
+import           Motor.FSM                      hiding ((:=))
+import qualified Motor.FSM                      as FSM
 
 import           GUISM.Base.WindowUserInterface
-import           GUISM.Gtk.Markup
 import           GUISM.Gtk.EventListener
+import           GUISM.Gtk.Markup
 
 newtype GtkUserInterface m i o a = GtkUserInterface
   (FSM m i o a) deriving (IxFunctor, IxPointed, IxApplicative, IxMonad, MonadFSM, IxMonadTrans)
@@ -55,10 +56,13 @@ deriving instance Monad m => Functor (GtkUserInterface m i i)
 deriving instance Monad m => Applicative (GtkUserInterface m i i)
 deriving instance Monad m => Monad (GtkUserInterface m i i)
 
+instance MonadIO m => IxMonadIO (GtkUserInterface m) where
+  iliftIO = ilift . liftIO
+
 data GtkWindow window event = GtkWindow
-  { markup       :: GtkWindowMarkup window event
-  , widgetState  :: Declarative.SomeState
-  , viewEvents   :: EventListener event
+  { markup      :: GtkWindowMarkup window event
+  , widgetState :: Declarative.SomeState
+  , viewEvents  :: EventListener event
   }
 
 asGtkWindow :: GtkWindow window event -> IO Gtk.Window
@@ -158,8 +162,5 @@ runUI ma = do
   runUI_ (ma >>= putMVar ret)
   takeMVar ret
 
-irunUI :: forall  t m i a . (MonadIO m, IxMonadTrans t) => IO a -> t m i i a
+irunUI :: IxMonadIO (t m) => IO a -> t m i i a
 irunUI = iliftIO . runUI
-
-iliftIO :: forall  t m i a . (MonadIO m, IxMonadTrans t) => IO a -> t m i i a
-iliftIO = ilift . liftIO
